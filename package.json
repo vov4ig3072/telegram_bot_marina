@@ -1,0 +1,26 @@
+{
+  "name": "freelance_marina_bot",
+  "version": "1.0.0",
+  "description": "telegram bot",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon index.js",
+    "start": "node index.js"
+  },
+  "keywords": [
+    "telegramm",
+    "freelance"
+  ],
+  "author": "Volodymyr Litvinichev <vovik3072@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "mongoose": "^6.9.0",
+    "node-telegram-bot-api": "^0.61.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  }
+}
