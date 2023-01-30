@@ -16,28 +16,33 @@ const EMAIL_REGEXP = /^[A-Z0-9._%+-]+@[A-Z0-9-]+.+.[A-Z]{2,4}$/i
 const TELPHONE_REGEXP = /^(\s*)?(\+)?([- _():=+]?\d[- _():=+]?){10,14}(\s*)?$/
 const URL_REGEXP = /[-a-zA-Z0-9@:%_\+.~#?&\/=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&\/=]*)?/gi
 
-const statistic = {
-    id: null,
-    user: {},
-    transition: []
-}
+// const statistic = {
+//     id: null,
+//     user: {},
+//     transition: []
+// }
 
 const user = {}
 
-async function createUser(chat){
-    if(!Object.keys(statistic.user).length){
-        statistic.user = chat
+async function createUser(chat, data){
+
+    const candidate = await Statistic.findOne({user: chat})
+    if(candidate){
+        return
     }
 
-    if(!statistic.id){
-        try{
-            const statisticBD = await new Statistic({user: statistic.user, transition: statistic.transition})
-            statisticBD.save()
+    const statisticBD = await new Statistic({user: chat, transition: data})
+    statisticBD.save()
+}
 
-            statistic.id = statisticBD._id
-        }catch (e) {
-            console.log(e);
-        }
+async function addTrancition(chat, data){
+    try{
+        const test = await Statistic.findOne({user: chat})
+        console.log(test.transition.push(data))
+
+        await Statistic.findOneAndUpdate({user: chat}, { transition: test.transition})
+    }catch (e) {
+        console.log(e);
     }
 }
 
@@ -57,10 +62,9 @@ async function start(){
         bot.on('message', async msg => {
             const {chat, text} = msg
 
-            statistic.transition.push(text)
-            
-            createUser(chat)
-           
+            createUser(chat, text)
+            addTrancition(chat, text)
+
             if(text === '/start'){
                 return await bot.sendMessage( chat.id, content.startMessage, startOption )
             }
@@ -92,15 +96,8 @@ async function start(){
             const data = msg.data
             const id = msg.message.chat.id
 
-            statistic.transition.push(data)
-
-            createUser(msg.message.chat)
-
-            try{
-                await Statistic.findOneAndUpdate({id: statistic.id}, {transition: statistic.transition})
-            }catch (e) {
-                console.log(e);
-            }
+            createUser(msg.message.chat, data)
+            addTrancition(msg.message.chat, data)
 
             if(data === "/info"){
                 return await bot.sendMessage(id, content.infoMessage, infoOption)
