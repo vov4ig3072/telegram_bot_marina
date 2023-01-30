@@ -2,6 +2,7 @@ import TelegramBot from "node-telegram-bot-api"
 import mongoose from "mongoose"
 import dotenv from "dotenv"
 import Telegram from './database/schema.js'
+import Statistic from './database/statistic.js'
 import content from './src/content.json' assert { type: 'json' }
 import options from './src/options.js'
 dotenv.config()
@@ -15,6 +16,12 @@ const EMAIL_REGEXP = /^[A-Z0-9._%+-]+@[A-Z0-9-]+.+.[A-Z]{2,4}$/i
 const TELPHONE_REGEXP = /^(\s*)?(\+)?([- _():=+]?\d[- _():=+]?){10,14}(\s*)?$/
 const URL_REGEXP = /[-a-zA-Z0-9@:%_\+.~#?&\/=]{2,256}\.[a-z]{2,4}\b(\/[-a-zA-Z0-9@:%_\+.~#?&\/=]*)?/gi
 
+const statistic = {
+    id: null,
+    user: {},
+    transition: []
+}
+
 const user = {}
 
 async function start(){
@@ -22,7 +29,7 @@ async function start(){
 
         await mongoose.connect(MONGO_URL) 
             
-        const bot = new TelegramBot(TOKEN, {polling: true});
+        const bot = new TelegramBot(TOKEN, { polling: true });
 
         bot.setMyCommands([
             {command: '/start', description: 'Почати заробляти💰'},
@@ -33,6 +40,23 @@ async function start(){
         bot.on('message', async msg => {
             const {chat, text} = msg
 
+            statistic.transition.push(text)
+            
+            if(!Object.keys(statistic.user).length){
+                statistic.user = chat
+            }
+
+            if(!statistic.id){
+                try{
+                    const statisticBD = await new Statistic({user: statistic.user, transition: statistic.transition})
+                    statisticBD.save()
+    
+                    statistic.id = statisticBD._id
+                }catch (e) {
+                    console.log(e);
+                }
+            }
+           
             if(text === '/start'){
                 return await bot.sendMessage( chat.id, content.startMessage, startOption )
             }
@@ -63,6 +87,14 @@ async function start(){
         bot.on('callback_query', async msg => {
             const data = msg.data
             const id = msg.message.chat.id
+
+            statistic.transition.push(data)
+
+            try{
+                await Statistic.findOneAndUpdate({id: statistic.id}, {transition: statistic.transition})
+            }catch (e) {
+                console.log(e);
+            }
 
             if(data === "/info"){
                 return await bot.sendMessage(id, content.infoMessage, infoOption)
