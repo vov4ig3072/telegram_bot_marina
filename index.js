@@ -2,8 +2,8 @@ import TelegramBot from "node-telegram-bot-api"
 import mongoose from "mongoose"
 import dotenv from "dotenv"
 import Telegram from './database/schema.js'
-import content from './content.json' assert { type: 'json' }
-import options from './options.js'
+import content from './src/content.json' assert { type: 'json' }
+import options from './src/options.js'
 dotenv.config()
 
 mongoose.set('strictQuery', true)
