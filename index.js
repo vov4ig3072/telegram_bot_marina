@@ -24,6 +24,23 @@ const statistic = {
 
 const user = {}
 
+async function createUser(chat){
+    if(!Object.keys(statistic.user).length){
+        statistic.user = chat
+    }
+
+    if(!statistic.id){
+        try{
+            const statisticBD = await new Statistic({user: statistic.user, transition: statistic.transition})
+            statisticBD.save()
+
+            statistic.id = statisticBD._id
+        }catch (e) {
+            console.log(e);
+        }
+    }
+}
+
 async function start(){
     try{
 
@@ -42,20 +59,7 @@ async function start(){
 
             statistic.transition.push(text)
             
-            if(!Object.keys(statistic.user).length){
-                statistic.user = chat
-            }
-
-            if(!statistic.id){
-                try{
-                    const statisticBD = await new Statistic({user: statistic.user, transition: statistic.transition})
-                    statisticBD.save()
-    
-                    statistic.id = statisticBD._id
-                }catch (e) {
-                    console.log(e);
-                }
-            }
+            createUser(chat)
            
             if(text === '/start'){
                 return await bot.sendMessage( chat.id, content.startMessage, startOption )
@@ -89,6 +93,8 @@ async function start(){
             const id = msg.message.chat.id
 
             statistic.transition.push(data)
+
+            createUser(msg.message.chat)
 
             try{
                 await Statistic.findOneAndUpdate({id: statistic.id}, {transition: statistic.transition})
